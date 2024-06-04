@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "147468830541",
+    "project_id": "luckynote-dbf75",
+    "storage_bucket": "luckynote-dbf75.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:147468830541:android:0b288a3f403e067e289904",
+        "android_client_info": {
+          "package_name": "com.example.lucky_note"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDc5A3LS69lc8022GnKu-NHfEbwg09WreI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
