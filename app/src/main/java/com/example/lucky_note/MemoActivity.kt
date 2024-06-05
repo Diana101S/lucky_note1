@@ -14,7 +14,11 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -22,6 +26,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class MemoActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -30,9 +37,10 @@ class MemoActivity : ComponentActivity() {
             MaterialTheme {
                 MemoScreen { memoContent ->
                     startActivity(
-                        Intent(this, Recent_memo1::class.java).apply {
-                            putExtra("memo_content", memoContent)
-                        }
+                        Intent(this, Recent_memo1::class.java)
+//                            .apply {
+//                            putExtra("memo_content", memoContent)
+//                        }
                     )
                 }
             }
@@ -46,10 +54,22 @@ fun MemoScreen(onMemoClick: (String) -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.fillMaxSize()
     ) {
-        val context = LocalContext.current
+        val contextDB = LocalContext.current
         val db = remember {
-            AppDatabase.getDatabase(context)
+            AppDatabase.getDatabase((contextDB))
         }
+        var memo1 by remember {
+            mutableStateOf("")
+        }
+        LaunchedEffect(Unit) {
+            CoroutineScope(Dispatchers.IO).launch {
+                memo1 = db.userDao().getMemo1() ?: "memo1"
+            }
+        }
+        Text(text = memo1) //긴가민가한
+
+        val context = LocalContext.current
+
         Spacer(modifier = Modifier.height(10.dp))
         Text(
             text = "Recently added",
@@ -57,7 +77,7 @@ fun MemoScreen(onMemoClick: (String) -> Unit) {
             modifier = Modifier.align(Alignment.CenterHorizontally)
         )
         Spacer(modifier = Modifier.height(20.dp))
-        MemoRow(onMemoClick)
+        MemoRow(onMemoClick, listOf(memo1, "메모 내용 2", "메모 내용 3", "메모 내용 4"))
 
         Spacer(modifier = Modifier.height(50.dp))
 
@@ -72,14 +92,17 @@ fun MemoScreen(onMemoClick: (String) -> Unit) {
 }
 
 @Composable
-fun MemoRow(onMemoClick: (String) -> Unit) {
+fun MemoRow(
+    onMemoClick: (String) -> Unit,
+    inputList: List<String>
+) {
     LazyRow(
         modifier = Modifier.fillMaxWidth(),
         contentPadding = PaddingValues(horizontal = 16.dp)
     ) {
 
 
-        items(listOf("메모 내용 1", "메모 내용 2", "메모 내용 3", "메모 내용 4")) { memo ->
+        items(inputList) { memo ->
             Box(
                 modifier = Modifier
                     .width(120.dp)
