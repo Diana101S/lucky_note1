@@ -57,7 +57,6 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             MaterialTheme {
-                val context = LocalContext.current as? Activity
                 SplashScreen(onGoogleLoginClick = {
                     val signInIntent = googleSignInClient.signInIntent
                     signInLauncher.launch(signInIntent)

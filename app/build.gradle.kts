@@ -1,7 +1,8 @@
 plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.jetbrainsKotlinAndroid)
-    id("com.google.gms.google-services") version "4.4.2" apply false
+    //id("com.google.gms.google-services") version "4.4.2" apply false
+    id("com.google.devtools.ksp")
 }
 
 android {
@@ -51,6 +52,11 @@ android {
 }
 
 dependencies {
+//Room
+    val room_version = "2.6.1"
+    implementation("androidx.room:room-ktx:$room_version")
+    ksp("androidx.room:room-compiler:$room_version")
+
 
     implementation(platform("com.google.firebase:firebase-bom:33.1.0"))
     implementation("com.google.firebase:firebase-analytics")
