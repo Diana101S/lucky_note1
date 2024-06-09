@@ -1,9 +1,12 @@
 package com.example.lucky_note
 
+import android.app.Activity.RESULT_OK
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -28,43 +31,41 @@ class MemoActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             MaterialTheme {
-                MemoScreen { memoContent ->
-                    startActivity(
-                        Intent(this, Recent_memo1::class.java)
-                    )
-                }
+                MemoScreen()
             }
         }
     }
 }
 
 @Composable
-fun MemoScreen(onMemoClick: (String) -> Unit) {
+fun MemoScreen() {
+    val contextDB = LocalContext.current
+    val db = remember { AppDatabase.getDatabase(contextDB) }
+    var memo1 by remember { mutableStateOf("") }
+    val scope = rememberCoroutineScope()
+
+    LaunchedEffect(Unit) {
+        scope.launch(Dispatchers.IO) {
+            try {
+                memo1 = db.memoDao().getMemo1() ?: "메모 내용이 없습니다"
+            } catch (e: Exception) {
+                memo1 = "오류 발생: ${e.message}"
+            }
+        }
+    }
+
+    val getMemoContent = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == RESULT_OK) {
+            result.data?.getStringExtra("memo_content")?.let {
+                memo1 = it
+            }
+        }
+    }
+
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.fillMaxSize()
     ) {
-        val contextDB = LocalContext.current
-        val db = remember {
-            AppDatabase.getDatabase(contextDB)
-        }
-        var memo1 by remember {
-            mutableStateOf("")
-        }
-        val scope = rememberCoroutineScope()
-
-        LaunchedEffect(Unit) {
-            scope.launch(Dispatchers.IO) {
-                try {
-                    memo1 = db.memoDao().getMemo1() ?: "메모 내용이 없습니다"
-                } catch (e: Exception) {
-                    memo1 = "오류 발생: ${e.message}"
-                }
-            }
-        }
-
-        //Text(text = memo1)
-
         Spacer(modifier = Modifier.height(10.dp))
         Text(
             text = "Recently added",
@@ -72,7 +73,12 @@ fun MemoScreen(onMemoClick: (String) -> Unit) {
             modifier = Modifier.align(Alignment.CenterHorizontally)
         )
         Spacer(modifier = Modifier.height(20.dp))
-        MemoRow(onMemoClick, listOf("메모 내용 1", "메모 내용 2", "메모 내용 3", "메모 내용 4"))
+        MemoRow(memo1) {
+            val intent = Intent(contextDB, Recent_memo1::class.java).apply {
+                putExtra("memo_content", memo1)
+            }
+            getMemoContent.launch(intent)
+        }
 
         Spacer(modifier = Modifier.height(50.dp))
 
@@ -88,21 +94,21 @@ fun MemoScreen(onMemoClick: (String) -> Unit) {
 
 @Composable
 fun MemoRow(
-    onMemoClick: (String) -> Unit,
-    inputList: List<String>
+    memo1: String,
+    onMemoClick: () -> Unit
 ) {
     LazyRow(
         modifier = Modifier.fillMaxWidth(),
         contentPadding = PaddingValues(horizontal = 16.dp)
     ) {
-        items(inputList) { memo ->
+        items(listOf(memo1, "메모 내용 2", "메모 내용 3", "메모 내용 4")) { memo ->
             Box(
                 modifier = Modifier
                     .width(120.dp)
                     .height(70.dp)
                     .background(Color.LightGray)
                     .clickable {
-                        onMemoClick(memo)
+                        onMemoClick()
                     },
                 contentAlignment = Alignment.Center
             ) {
@@ -151,6 +157,6 @@ fun MemoCategory() {
 @Composable
 fun MemoScreenPreview() {
     MaterialTheme {
-        MemoScreen { }
+        MemoScreen()
     }
 }

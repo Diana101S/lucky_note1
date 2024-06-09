@@ -1,5 +1,7 @@
 package com.example.lucky_note
 
+import android.app.Activity
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -11,8 +13,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.Dispatchers
@@ -22,6 +25,7 @@ import android.widget.Toast
 class Recent_memo1 : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val memoContent = intent.getStringExtra("memo_content") ?: ""
         setContent {
             MaterialTheme(
                 colorScheme = lightColorScheme(
@@ -35,7 +39,13 @@ class Recent_memo1 : ComponentActivity() {
                     onSurface = Color.Black
                 )
             ) {
-                RecentMemoScreen { finish() }
+                RecentMemoScreen(memoContent) { resultMemo ->
+                    val intent = Intent().apply {
+                        putExtra("memo_content", resultMemo)
+                    }
+                    setResult(Activity.RESULT_OK, intent)
+                    finish()
+                }
             }
         }
     }
@@ -43,19 +53,13 @@ class Recent_memo1 : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RecentMemoScreen(onBackClick: () -> Unit) {
+fun RecentMemoScreen(initialMemoContent: String, onSave: (String) -> Unit) {
     val contextDB = LocalContext.current
     val db = remember { AppDatabase.getDatabase(contextDB) }
-    var memo1 by remember { mutableStateOf("") }
+    var memo1 by remember { mutableStateOf(initialMemoContent) }
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
-
-    // Load memo content from the database when the composable is first displayed
-    LaunchedEffect(Unit) {
-        scope.launch(Dispatchers.IO) {
-            memo1 = db.memoDao().getMemo1() ?: ""
-        }
-    }
+    val fontFamily = FontFamily(Font(R.font.noto_sans_kr_regular))
 
     Scaffold(
         topBar = {
@@ -79,7 +83,8 @@ fun RecentMemoScreen(onBackClick: () -> Unit) {
                     text = "Your Memo:",
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground
+                    color = MaterialTheme.colorScheme.onBackground,
+                    fontFamily = fontFamily
                 )
                 Spacer(modifier = Modifier.height(10.dp))
                 TextField(
@@ -104,6 +109,7 @@ fun RecentMemoScreen(onBackClick: () -> Unit) {
                             db.memoDao().insertMemo(Memo(content = memo1))
                             scope.launch(Dispatchers.Main) {
                                 Toast.makeText(context, "Memo saved", Toast.LENGTH_SHORT).show()
+                                onSave(memo1)
                             }
                         }
                     },
@@ -119,7 +125,7 @@ fun RecentMemoScreen(onBackClick: () -> Unit) {
 
                 Button(
                     onClick = {
-                        onBackClick()
+                        onSave(memo1)
                     },
                     modifier = Modifier
                         .fillMaxWidth()
@@ -132,23 +138,3 @@ fun RecentMemoScreen(onBackClick: () -> Unit) {
         }
     )
 }
-
-@Preview(showBackground = true)
-@Composable
-fun RecentMemoScreenPreview() {
-    MaterialTheme(
-        colorScheme = lightColorScheme(
-            primary = Color(0xFF4CAF50),  // 초록색
-            onPrimary = Color.White,
-            secondary = Color(0xFF8BC34A),  // 밝은 초록색
-            onSecondary = Color.White,
-            background = Color(0xFFF0F0F0),  // 밝은 회색
-            onBackground = Color.Black,
-            surface = Color.White,
-            onSurface = Color.Black
-        )
-    ) {
-        RecentMemoScreen {}
-    }
-}
-ㅍ
