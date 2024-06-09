@@ -1,6 +1,5 @@
 package com.example.lucky_note
 
-import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -13,12 +12,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -26,7 +20,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -38,9 +31,6 @@ class MemoActivity : ComponentActivity() {
                 MemoScreen { memoContent ->
                     startActivity(
                         Intent(this, Recent_memo1::class.java)
-//                            .apply {
-//                            putExtra("memo_content", memoContent)
-//                        }
                     )
                 }
             }
@@ -56,19 +46,24 @@ fun MemoScreen(onMemoClick: (String) -> Unit) {
     ) {
         val contextDB = LocalContext.current
         val db = remember {
-            AppDatabase.getDatabase((contextDB))
+            AppDatabase.getDatabase(contextDB)
         }
         var memo1 by remember {
             mutableStateOf("")
         }
+        val scope = rememberCoroutineScope()
+
         LaunchedEffect(Unit) {
-            CoroutineScope(Dispatchers.IO).launch {
-                memo1 = db.userDao().getMemo1() ?: "memo1"
+            scope.launch(Dispatchers.IO) {
+                try {
+                    memo1 = db.memoDao().getMemo1() ?: "메모 내용이 없습니다"
+                } catch (e: Exception) {
+                    memo1 = "오류 발생: ${e.message}"
+                }
             }
         }
-        Text(text = memo1) //긴가민가한
 
-        val context = LocalContext.current
+        //Text(text = memo1)
 
         Spacer(modifier = Modifier.height(10.dp))
         Text(
@@ -77,7 +72,7 @@ fun MemoScreen(onMemoClick: (String) -> Unit) {
             modifier = Modifier.align(Alignment.CenterHorizontally)
         )
         Spacer(modifier = Modifier.height(20.dp))
-        MemoRow(onMemoClick, listOf(memo1, "메모 내용 2", "메모 내용 3", "메모 내용 4"))
+        MemoRow(onMemoClick, listOf("메모 내용 1", "메모 내용 2", "메모 내용 3", "메모 내용 4"))
 
         Spacer(modifier = Modifier.height(50.dp))
 
@@ -100,8 +95,6 @@ fun MemoRow(
         modifier = Modifier.fillMaxWidth(),
         contentPadding = PaddingValues(horizontal = 16.dp)
     ) {
-
-
         items(inputList) { memo ->
             Box(
                 modifier = Modifier
@@ -118,7 +111,6 @@ fun MemoRow(
             Spacer(modifier = Modifier.width(10.dp))
         }
     }
-
 }
 
 @Composable
@@ -138,7 +130,7 @@ fun MemoCategory() {
                 ) {
                     Text(text = category)
                 }
-                Spacer(modifier = Modifier.height(16.dp)) // Added space between the boxes
+                Spacer(modifier = Modifier.height(16.dp))
                 Box(
                     modifier = Modifier
                         .width(170.dp)
@@ -146,8 +138,6 @@ fun MemoCategory() {
                         .background(Color.LightGray),
                     contentAlignment = Alignment.Center
                 ) {
-
-                    // Display the third or fourth category content based on the index
                     Text(text = if (index == 0) "카테고리 내용 3" else "카테고리 내용 4")
                 }
                 Spacer(modifier = Modifier.height(10.dp))
@@ -155,7 +145,6 @@ fun MemoCategory() {
             Spacer(modifier = Modifier.width(10.dp))
         }
     }
-
 }
 
 @Preview(showBackground = true)
